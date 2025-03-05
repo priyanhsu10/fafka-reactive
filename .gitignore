@@ -1,1 +1,6 @@
 01-kafka-setup/compose/data
+01-kafka-setup/compose/data/replication-offset-checkpoint
+01-kafka-setup/compose/data/__cluster_metadata-0/00000000000000000000.index
+01-kafka-setup/compose/data/__cluster_metadata-0/00000000000000000000.log
+01-kafka-setup/compose/data/__cluster_metadata-0/00000000000000000000.timeindex
+01-kafka-setup/compose/data/hello-world-0/00000000000000000000.log
