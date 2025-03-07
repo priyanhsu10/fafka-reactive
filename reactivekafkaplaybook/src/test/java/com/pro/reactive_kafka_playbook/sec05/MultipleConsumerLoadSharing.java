@@ -1,6 +1,7 @@
 package com.pro.reactive_kafka_playbook.sec05;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -75,7 +76,9 @@ class Consumer {
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                 ConsumerConfig.GROUP_ID_CONFIG, "laadshreader",
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
-                ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, groupInsetaceid
+                ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, groupInsetaceid,
+                ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, CooperativeStickyAssignor.class.getName()
+
 
         );
         var receiverOptions = ReceiverOptions.create(map)
