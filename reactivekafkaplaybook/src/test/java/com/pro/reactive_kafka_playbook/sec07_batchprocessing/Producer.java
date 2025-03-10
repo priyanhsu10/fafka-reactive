@@ -19,7 +19,7 @@ public class Producer {
         );
         var senderOptions = SenderOptions.<String, String>create(map);
         var flux = Flux.range(1, 100)
-                .map(x -> new ProducerRecord<>("order-event", x.toString(), "order-item"))
+                .map(x -> new ProducerRecord<>("order-event", x.toString(), "order-item-"+x))
                 .map(x -> SenderRecord.create(x, x.key()));
 
         var sender = KafkaSender.create(senderOptions);
