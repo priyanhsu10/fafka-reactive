@@ -31,7 +31,8 @@ public class Consumer {
         KafkaReceiver.create(receiverOptions)
                 .receiveAutoAck()
                 .log()
-                .concatMap(Consumer::process)
+                //.concatMap(Consumer::process)
+                .flatMap(Consumer::process)
                 .subscribe();
     }
     public  static Mono<Void> process(Flux<ConsumerRecord<String,String>> flux){
