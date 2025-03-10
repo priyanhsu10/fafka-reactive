@@ -23,9 +23,10 @@ public class Consumer {
                 ConsumerConfig.GROUP_ID_CONFIG,"batch-processing",
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest",
                 ConsumerConfig.GROUP_INSTANCE_ID_CONFIG,"1",
-               ConsumerConfig.MAX_POLL_RECORDS_CONFIG,10
+               ConsumerConfig.MAX_POLL_RECORDS_CONFIG,500
         );
-        var receiverOptions= ReceiverOptions.<String,String>create(map).subscription(List.of("order-event"));
+        var receiverOptions= ReceiverOptions.<String,String>create(map).subscription(List.of("order-event"))
+                        .commitInterval(Duration.ofSeconds(1));
 
 
         KafkaReceiver.create(receiverOptions)
