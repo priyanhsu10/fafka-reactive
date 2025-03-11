@@ -22,6 +22,7 @@ import reactor.util.retry.Retry;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class RetryProcessing {
     public static void main(String[] args) {
@@ -40,7 +41,7 @@ class Producer {
         var option = SenderOptions.<String, String>create(map);
 
         var sender = KafkaSender.create(option);
-        var flux = Flux.range(1, 10)
+        var flux = Flux.range(1, 100)
                 .map(x -> new ProducerRecord<>("order-event", x.toString(), "order-number-" + x))
                 .map(x -> SenderRecord.create(x, x.key()));
         sender.send(flux)
@@ -66,19 +67,21 @@ class Consumer {
 
         KafkaReceiver.create(option)
                 .receive()
-                .doOnNext(x->log.info(" log charector e {}", x.key().toCharArray()[12]))
-                .doOnError((x)->log.info(x.getLocalizedMessage()))
-                .retryWhen(Retry.fixedDelay(3,Duration.ofSeconds(1)))
-                .blockLast();
-
+                .concatMap(x->separateProcessing(x))
+                .subscribe();
     }
 
-    private static Mono<Void> process(GroupedFlux<Integer, ReceiverRecord<String, String>> flux) {
-        System.out.println("------------------------ flux subscribing for key : " + flux.key());
-        return flux.
-                publishOn(Schedulers.boundedElastic())
-                .doOnNext(x -> log.info("key {}, value {}", x.key(), x.value()))
-                .doOnNext(x -> x.receiverOffset().acknowledge())
+    private static Mono<Void> separateProcessing( ReceiverRecord<String, String> record) {
+        return Mono.just(record)
+                .doOnNext(x-> {
+                    var index = ThreadLocalRandom.current().nextInt(1,100);
+                    log.info(" log charector e {}", x.value().toCharArray()[index]);
+                })
+
+                .retryWhen(Retry.fixedDelay(3,Duration.ofSeconds(1)).onRetryExhaustedThrow((x,y)->y.failure()))
+                .doOnError((x)->log.info(x.getMessage()))
+                .doFinally(x->record.receiverOffset().acknowledge())
+                .onErrorComplete()
                 .then();
     }
 }
