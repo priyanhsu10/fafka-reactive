@@ -8,9 +8,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 import reactor.kafka.receiver.ReceiverRecord;
@@ -67,21 +65,35 @@ class Consumer {
 
         KafkaReceiver.create(option)
                 .receive()
-                .concatMap(x->separateProcessing(x))
+                .concatMap(x -> separateProcessing(x))
                 .subscribe();
     }
 
-    private static Mono<Void> separateProcessing( ReceiverRecord<String, String> record) {
+    private static Mono<Void> separateProcessing(ReceiverRecord<String, String> record) {
         return Mono.just(record)
-                .doOnNext(x-> {
-                    var index = ThreadLocalRandom.current().nextInt(1,100);
+                .doOnNext(x -> {
+                    if (x.key().equals("5")) {
+                        throw new RuntimeException("DB is down");
+
+                    }
+                    var index = ThreadLocalRandom.current().nextInt(1, 100);
                     log.info(" log charector e {}", x.value().toCharArray()[index]);
+                    x.receiverOffset().acknowledge();
                 })
 
-                .retryWhen(Retry.fixedDelay(3,Duration.ofSeconds(1)).onRetryExhaustedThrow((x,y)->y.failure()))
-                .doOnError((x)->log.info(x.getMessage()))
-                .doFinally(x->record.receiverOffset().acknowledge())
-                .onErrorComplete()
+
+//                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)).onRetryExhaustedThrow((x, y) -> y.failure()))
+                .retryWhen(retrySpec())
+                .doOnError((x) -> log.info(x.getMessage()))
+                .onErrorResume(IndexOutOfBoundsException.class,ex->Mono.fromRunnable(()->record.receiverOffset().acknowledge()))
+//                .doFinally(x->record.receiverOffset().acknowledge())
+                //               .onErrorComplete()
                 .then();
+    }
+
+    public static Retry retrySpec() {
+        return Retry.fixedDelay(3, Duration.ofSeconds(1))
+                .filter(x -> IndexOutOfBoundsException.class.isInstance(x))
+                .onRetryExhaustedThrow((spec, signal) -> signal.failure());
     }
 }
