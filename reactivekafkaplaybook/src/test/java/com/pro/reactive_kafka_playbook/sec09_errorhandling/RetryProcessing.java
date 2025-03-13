@@ -77,7 +77,7 @@ class Consumer {
 
                     }
                     var index = ThreadLocalRandom.current().nextInt(1, 100);
-                    log.info(" log charector e {}", x.value().toCharArray()[index]);
+                    log.info(" log charector e {}  : key {}", x.value().toCharArray()[index],index);
                     x.receiverOffset().acknowledge();
                 })
 
