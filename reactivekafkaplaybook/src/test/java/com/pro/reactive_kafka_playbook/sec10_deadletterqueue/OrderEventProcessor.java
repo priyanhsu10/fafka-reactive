@@ -17,9 +17,9 @@ public class OrderEventProcessor {
 
         return Mono.just(receiverRecord)
                 .doOnNext(x -> {
-                    if (x.key().endsWith("5")) {
-                        throw new RuntimeException("Proccessing Exception");
-                    }
+//                    if (x.key().endsWith("5")) {
+//                        throw new RuntimeException("Proccessing Exception");
+//                    }
                     log.info("key {}, value {}", x.key(), x.value());
                     x.receiverOffset().acknowledge();
                 })
